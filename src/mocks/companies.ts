@@ -1,0 +1,103 @@
+import type { Company } from '../types/insight';
+
+/**
+ * Синтетические клиенты (SYNTHETIC_U). Никаких реальных данных:
+ * названия, идентификаторы и цифры придуманы для демонстрации персонализации.
+ */
+export const COMPANIES: Company[] = [
+    {
+        id: 'U-10482',
+        name: 'ООО «СеверТопливо»',
+        short: '«СеверТопливо»',
+        initials: 'СТ',
+        okved: '46.71',
+        okved_title: 'оптовая торговля топливом',
+        revenue: '38 млрд ₽',
+        staff: '250–500 сотрудников',
+        region: 'Тюменская область',
+        group_id: 'G-311',
+        group_size: 4,
+        foreign_trade: 'Импорт · Беларусь (ФТС)',
+        products: ['РКО', 'кредитная линия', 'гарантии', 'депозит'],
+        top_counterparties: '5 по объёму платежей',
+        credit_line: { limit_mln: 250, drawn_mln: 190, margin_pp: 3.1 },
+        accounts: [
+            { title: 'Расчётный счёт ··4821', amount: '84 512 300,00 ₽', note: 'Доступно сейчас' },
+            { title: 'Кредитная линия', amount: '250 000 000 ₽', note: 'Ставка: КС + 3,1%' },
+            { title: 'Депозит', amount: '120 000 000 ₽', note: 'До 15.12.2026 · 16,2%' },
+        ],
+        operations: [
+            { title: 'ООО «НефтеСнаб» · поставка ДТ', amount: '−42 300 000 ₽' },
+            { title: 'АО «ТрансЛогистик» · оплата по договору', amount: '+18 750 000 ₽', incoming: true },
+            { title: 'Процентный платёж по кредитной линии', amount: '−2 916 000 ₽' },
+        ],
+        tasks: ['3 платёжных поручения · 61,2 млн ₽', 'Заявка на гарантию · 15 млн ₽'],
+        user_name: 'Анна',
+        user_initials: 'АК',
+        features_count: 14,
+    },
+    {
+        id: 'U-20917',
+        name: 'АО «АгроЮг»',
+        short: '«АгроЮг»',
+        initials: 'АЮ',
+        okved: '01.11',
+        okved_title: 'выращивание зерновых культур',
+        revenue: '21 млрд ₽',
+        staff: '500–1000 сотрудников',
+        region: 'Краснодарский край',
+        group_id: 'G-127',
+        group_size: 6,
+        foreign_trade: 'Экспорт · Турция, Египет (ФТС)',
+        products: ['РКО', 'валютный контроль', 'сезонный кредит', 'факторинг'],
+        top_counterparties: '7 по объёму платежей',
+        credit_line: { limit_mln: 400, drawn_mln: 310, margin_pp: 2.8 },
+        accounts: [
+            { title: 'Расчётный счёт ··7310', amount: '46 204 900,00 ₽', note: 'Доступно сейчас' },
+            { title: 'Валютный счёт USD ··0915', amount: '$ 1 840 000', note: 'Экспортная выручка' },
+            { title: 'Сезонный кредит', amount: '400 000 000 ₽', note: 'Ставка: КС + 2,8%' },
+        ],
+        operations: [
+            { title: 'Grain Trading FZE · экспорт пшеницы', amount: '+$ 612 000', incoming: true },
+            { title: 'ООО «АгроХимПоставка» · удобрения', amount: '−18 900 000 ₽' },
+            { title: 'Продажа валютной выручки', amount: '+55 380 000 ₽', incoming: true },
+        ],
+        tasks: ['2 платёжных поручения · 23,4 млн ₽', 'Валютный контракт на проверку · $ 1,2 млн'],
+        user_name: 'Игорь',
+        user_initials: 'ИП',
+        features_count: 12,
+    },
+    {
+        id: 'U-33650',
+        name: 'ООО «МедТехСнаб»',
+        short: '«МедТехСнаб»',
+        initials: 'МС',
+        okved: '46.46',
+        okved_title: 'оптовая торговля медицинскими товарами',
+        revenue: '9,4 млрд ₽',
+        staff: '100–250 сотрудников',
+        region: 'Москва',
+        group_id: 'G-502',
+        group_size: 2,
+        foreign_trade: 'Импорт · Китай, расчёты в CNY (ФТС)',
+        products: ['РКО', 'овердрафт', 'аккредитивы', 'валютный контроль'],
+        top_counterparties: '4 по объёму платежей',
+        credit_line: { limit_mln: 120, drawn_mln: 64, margin_pp: 3.6 },
+        accounts: [
+            { title: 'Расчётный счёт ··2208', amount: '31 078 450,00 ₽', note: 'Доступно сейчас' },
+            { title: 'Счёт в CNY ··5521', amount: '¥ 4 260 000', note: 'Под оплату поставок' },
+            { title: 'Овердрафт', amount: '120 000 000 ₽', note: 'Ставка: КС + 3,6%' },
+        ],
+        operations: [
+            { title: 'Shenzhen MedEquip Co. · аккредитив', amount: '−¥ 2 150 000' },
+            { title: 'ГБУЗ «ГКБ № 15» · оплата по контракту', amount: '+12 640 000 ₽', incoming: true },
+            { title: 'Покупка CNY', amount: '−26 300 000 ₽' },
+        ],
+        tasks: ['1 аккредитив на подпись · ¥ 3,4 млн', 'Платёжное поручение · 4,8 млн ₽'],
+        user_name: 'Мария',
+        user_initials: 'МЛ',
+        features_count: 11,
+    },
+];
+
+export const getCompany = (id: string) => COMPANIES.find((c) => c.id === id) ?? COMPANIES[0];

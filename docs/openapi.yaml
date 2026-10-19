@@ -1,0 +1,221 @@
+openapi: 3.1.0
+info:
+  title: Alfa News Insight API
+  version: 1.0.0
+  description: |
+    Контракт между фронтендом прототипа и бэкендом AI-агента.
+    Фронтенд переключается на этот API флагом VITE_API_MODE=http (см. README).
+    Все ответы с инсайтами — в формате insight.v1 (docs/insight.v1.schema.json).
+servers:
+  - url: /api
+    description: Через прокси nginx (Docker) или Vite (dev)
+
+paths:
+  /companies:
+    get:
+      summary: Компании, доступные пользователю (для переключателя в топбаре)
+      responses:
+        '200':
+          description: Список синтетических клиентов
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Company' }
+
+  /feed:
+    get:
+      summary: Персональная лента событий
+      parameters:
+        - { $ref: '#/components/parameters/CompanyId' }
+        - { $ref: '#/components/parameters/Role' }
+      responses:
+        '200':
+          description: События, отобранные и отсортированные по релевантности для компании и роли
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FeedResponse' }
+
+  /events/{id}:
+    get:
+      summary: Карточка события с интерпретацией для компании
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - { $ref: '#/components/parameters/CompanyId' }
+        - { $ref: '#/components/parameters/Role' }
+      responses:
+        '200':
+          description: Инсайт insight.v1
+          content:
+            application/json:
+              schema: { $ref: './insight.v1.schema.json' }
+        '404':
+          description: Событие не относится к компании
+
+  /chat:
+    post:
+      summary: Вопрос AI-аналитику в контексте события и компании
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatRequest' }
+      responses:
+        '200':
+          description: Ответ агента. Если вопрос неоднозначен — заполнено поле clarify (уточняющий вопрос).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ChatAnswer' }
+
+  /trace/{run_id}:
+    get:
+      summary: Трасса прогона агента
+      parameters:
+        - name: run_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Шаги агента, метрики и итоговый инсайт
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TraceResponse' }
+
+components:
+  parameters:
+    CompanyId:
+      name: company_id
+      in: query
+      required: true
+      schema: { type: string, pattern: '^U-\d{5}$', example: U-10482 }
+    Role:
+      name: role
+      in: query
+      required: true
+      schema: { $ref: '#/components/schemas/Role' }
+
+  schemas:
+    Role:
+      type: string
+      enum: [ceo, cfo, treasurer, procurement]
+
+    Company:
+      type: object
+      required: [id, name, short, initials, okved, okved_title, revenue, region, group_id, products]
+      properties:
+        id: { type: string, example: U-10482 }
+        name: { type: string, example: ООО «СеверТопливо» }
+        short: { type: string }
+        initials: { type: string }
+        okved: { type: string, example: '46.71' }
+        okved_title: { type: string }
+        revenue: { type: string }
+        staff: { type: string }
+        region: { type: string }
+        group_id: { type: string, example: G-311 }
+        group_size: { type: integer }
+        foreign_trade: { type: string }
+        products: { type: array, items: { type: string } }
+        top_counterparties: { type: string }
+        credit_line:
+          type: object
+          properties:
+            limit_mln: { type: number }
+            drawn_mln: { type: number }
+            margin_pp: { type: number }
+        accounts:
+          type: array
+          items:
+            type: object
+            properties: { title: { type: string }, amount: { type: string }, note: { type: string } }
+        operations:
+          type: array
+          items:
+            type: object
+            properties: { title: { type: string }, amount: { type: string }, incoming: { type: boolean } }
+        tasks: { type: array, items: { type: string } }
+        user_name: { type: string }
+        user_initials: { type: string }
+        features_count: { type: integer }
+
+    FeedResponse:
+      type: object
+      required: [company_id, role, updated_at, items]
+      properties:
+        company_id: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        updated_at: { type: string, format: date-time }
+        items:
+          type: array
+          items: { $ref: './insight.v1.schema.json' }
+
+    ChatRequest:
+      type: object
+      required: [company_id, role, messages]
+      properties:
+        company_id: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+        event_id: { type: string }
+        messages:
+          type: array
+          items:
+            type: object
+            required: [role, content]
+            properties:
+              role: { type: string, enum: [user, assistant] }
+              content: { type: string }
+
+    ChatAnswer:
+      type: object
+      required: [origins, paragraphs, citations]
+      properties:
+        origins:
+          type: array
+          description: Происхождение ответа — ai и/или bank (fact — для цитат первоисточников)
+          items: { type: string, enum: [fact, bank, ai] }
+        paragraphs: { type: array, items: { type: string } }
+        table:
+          type: object
+          properties:
+            columns: { type: array, items: { type: string } }
+            rows: { type: array, items: { type: array, items: { type: string } } }
+        citations:
+          type: array
+          items:
+            type: object
+            required: [n, label]
+            properties:
+              n: { type: integer }
+              label: { type: string }
+              source_id: { type: string }
+        clarify:
+          type: object
+          description: Уточняющий вопрос агента
+          properties:
+            question: { type: string }
+            options: { type: array, items: { type: string } }
+        slices: { type: array, items: { type: string } }
+        run_id: { type: string }
+
+    TraceResponse:
+      type: object
+      required: [run_id, event_id, company_id, steps, retries, duration_s, tokens, models, features, insight]
+      properties:
+        run_id: { type: string }
+        event_id: { type: string }
+        company_id: { type: string }
+        steps:
+          type: array
+          items: { $ref: './insight.v1.schema.json#/$defs/traceStep' }
+        retries: { type: integer }
+        duration_s: { type: number }
+        tokens: { type: integer }
+        models: { type: string }
+        features:
+          type: array
+          items: { $ref: './insight.v1.schema.json#/properties/features/items' }
+        insight: { $ref: './insight.v1.schema.json' }
