@@ -1,0 +1,20 @@
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+.env/
+
+# IDEs and Editors (PyCharm, VS Code)
+.idea/
+.vscode/
+
+# Python cache and bytecode
+__pycache__/
+
+# Build and distribution artifacts
+build/
+dist/
+
+# Environment variables and secrets
+.env
