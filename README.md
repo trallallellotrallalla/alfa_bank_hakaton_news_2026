@@ -1,2 +1,2 @@
-# alffa_bank_hakaton_news_2026
+# alfa_bank_hakaton_news_2026
 Команда DeleteSystem32
