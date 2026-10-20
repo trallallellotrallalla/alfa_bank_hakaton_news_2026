@@ -1,8 +1,7 @@
-# ПРИМЕР для того, кто разворачивает. Это фрагмент: в общий compose проекта
-# переносится сервис news-parser (и db, если базы ещё нет).
 services:
   db:
     image: pgvector/pgvector:pg16
+    restart: unless-stopped
     environment:
       POSTGRES_USER: news
       POSTGRES_PASSWORD: news
@@ -15,7 +14,9 @@ services:
       retries: 10
 
   news-parser:
-    build: ./news-parser
+    build:
+      context: ./news-parser
+      dockerfile: Dockerfile
     env_file: ./news-parser/.env
     volumes:
       - ./data/alfa:/data/alfa:ro   # PDF аналитики Альфа-Банка
