@@ -1,0 +1,95 @@
+# Список источников. Новый источник = новый блок здесь (код менять не нужно,
+# если тип уже поддерживается: rss | cbr_fx | moex_index).
+#
+# trust — доверие к источнику (0..1). Используется при ранжировании и при
+# выборе «главной» статьи события.
+# fetch_full_text — скачивать ли полный текст по ссылке (RSS часто отдаёт
+# только анонс). Для RSS с полным текстом внутри (РБК) можно выключить.
+# min_text_chars — свой порог длины текста (по умолчанию MIN_TEXT_CHARS=200);
+# нужен источникам, у которых есть только короткий анонс (пейволл / запрет на скачивание).
+# headline_only — в ленте только заголовок (+ короткий анонс): текстом статьи
+# считается он. Такие статьи слабо информативны сами по себе, но добавляют
+# независимый источник к событию, собранному из полных текстов.
+# enabled: false — источник выключен.
+
+sources:
+  - id: rbc
+    name: РБК
+    type: rss
+    url: https://rssexport.rbc.ru/rbcnews/news/30/full.rss
+    trust: 0.8
+    fetch_full_text: false   # полный текст уже есть в RSS
+    max_items: 30
+
+  - id: interfax
+    name: Интерфакс
+    type: rss
+    url: https://www.interfax.ru/rss
+    trust: 0.9
+    fetch_full_text: true
+    max_items: 30
+
+  - id: kommersant_economics
+    name: Коммерсантъ — Экономика
+    type: rss
+    url: https://www.kommersant.ru/rss/section-economics.xml
+    trust: 0.85
+    fetch_full_text: true
+    max_items: 30
+
+  - id: vedomosti
+    name: Ведомости
+    type: rss
+    url: https://www.vedomosti.ru/rss/news
+    trust: 0.85
+    fetch_full_text: false   # пейволл, в RSS только заголовки
+    headline_only: true
+    min_text_chars: 30
+    max_items: 30
+
+  - id: tass
+    name: ТАСС
+    type: rss
+    url: https://tass.ru/rss/v2.xml
+    trust: 0.85
+    fetch_full_text: false   # сайт отдаёт 403 на скачивание статей — работаем по анонсу
+    headline_only: true
+    min_text_chars: 30
+    max_items: 30
+
+  - id: cbr_press
+    name: Банк России — пресс-релизы
+    type: rss
+    url: https://www.cbr.ru/rss/RssPress
+    trust: 1.0
+    fetch_full_text: false   # пресс-релиз целиком лежит в description
+    max_items: 20
+
+  - id: banki_ru
+    name: Банки.ру
+    type: rss
+    url: https://www.banki.ru/xml/news.rss
+    enabled: false   # отдаёт антибот-заглушку вместо RSS; обходить защиту не будем
+    trust: 0.6
+    fetch_full_text: true
+    max_items: 20
+
+  # Структурированные источники: превращаем цифры в «событие» только при
+  # существенном изменении (alert_threshold_pct), чтобы не засорять ленту.
+  - id: cbr_fx
+    name: Банк России — официальные курсы
+    type: cbr_fx
+    url: https://www.cbr.ru/scripts/XML_daily.asp
+    trust: 1.0
+    currencies: [USD, EUR, CNY]
+    alert_threshold_pct: 1.0
+
+  - id: moex_indices
+    name: Московская биржа — индексы
+    type: moex_index
+    url: https://iss.moex.com/iss/history/engines/stock/markets/index/securities
+    trust: 1.0
+    indices:
+      IMOEX: Индекс МосБиржи
+      RGBITR: Индекс гособлигаций RGBI
+    alert_threshold_pct: 1.5
