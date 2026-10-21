@@ -1,3 +1,9 @@
+# Environment variables and secrets
+.env
+.env.*
+*.env
+!*.env.example
+
 # Virtual Environments
 .venv/
 venv/
@@ -5,16 +11,39 @@ ENV/
 env/
 .env/
 
-# IDEs and Editors (PyCharm, VS Code)
-.idea/
-.vscode/
-
 # Python cache and bytecode
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 
 # Build and distribution artifacts
 build/
 dist/
+*.egg-info/
 
-# Environment variables and secrets
-.env
+# Data and database volumes
+data/
+postgres_data/
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
