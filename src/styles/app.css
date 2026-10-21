@@ -421,6 +421,7 @@ a {
 
 .columns__side {
     flex: 0 0 340px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -888,7 +889,11 @@ a {
     line-height: 18px;
 }
 
-.source:hover .source__title {
+.source_nolink .source__title {
+    color: var(--color-light-text-primary);
+}
+
+a.source:hover .source__title {
     text-decoration: underline;
 }
 
@@ -1234,6 +1239,8 @@ a.cite:hover {
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
     font-size: 12px;
     line-height: 16px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 .rule {

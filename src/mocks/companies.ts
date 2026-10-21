@@ -98,6 +98,38 @@ export const COMPANIES: Company[] = [
         user_initials: 'МЛ',
         features_count: 11,
     },
+    {
+        // Клиент из примера бэкенда (docs/vyhod.example.json): его лента строится из формата «ВЫХОД» через адаптер
+        id: 'U_176',
+        name: 'ООО «ТрансМагистраль»',
+        short: '«ТрансМагистраль»',
+        initials: 'ТМ',
+        okved: '49.41',
+        okved_title: 'грузовые перевозки автотранспортом',
+        revenue: '12 млрд ₽',
+        staff: '500–1000 сотрудников',
+        region: 'Самарская область',
+        group_id: 'G-418',
+        group_size: 3,
+        foreign_trade: 'Нет',
+        products: ['РКО', 'кредитная линия', 'лизинг', 'депозит'],
+        top_counterparties: '6 по объёму платежей',
+        credit_line: { limit_mln: 300, drawn_mln: 210, margin_pp: 3.4 },
+        accounts: [
+            { title: 'Расчётный счёт ··1176', amount: '27 930 600,00 ₽', note: 'Доступно сейчас' },
+            { title: 'Кредитная линия', amount: '300 000 000 ₽', note: 'Ставка: КС + 3,4%' },
+            { title: 'Депозит', amount: '45 000 000 ₽', note: 'До 30.11.2026 · 15,8%' },
+        ],
+        operations: [
+            { title: 'ООО «ЛизингТехКапитал» · платёж по лизингу', amount: '−6 480 000 ₽' },
+            { title: 'АО «РитейлЛогистика» · оплата рейсов', amount: '+14 200 000 ₽', incoming: true },
+            { title: 'Процентный платёж по кредитной линии', amount: '−3 045 000 ₽' },
+        ],
+        tasks: ['4 платёжных поручения · 18,7 млн ₽', 'Заявка на рефинансирование · 120 млн ₽'],
+        user_name: 'Олег',
+        user_initials: 'ОС',
+        features_count: 9,
+    },
 ];
 
 export const getCompany = (id: string) => COMPANIES.find((c) => c.id === id) ?? COMPANIES[0];

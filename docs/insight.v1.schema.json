@@ -14,7 +14,7 @@
     "schema": { "const": "insight.v1" },
     "event_id": { "type": "string", "description": "id новостного кластера, общий для всех компаний" },
     "run_id": { "type": "string", "description": "id прогона агента; трасса — GET /trace/{run_id}" },
-    "company_id": { "type": "string", "pattern": "^U-\\d{5}$", "description": "Синтетический id клиента (SYNTHETIC_U)" },
+    "company_id": { "type": "string", "pattern": "^U[-_]\\d+$", "description": "Синтетический id клиента (SYNTHETIC_U), например U-10482 или U_176" },
     "title": { "type": "string" },
     "summary": { "type": "string" },
     "published_at": { "type": "string", "format": "date-time" },

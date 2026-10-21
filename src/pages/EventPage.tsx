@@ -73,7 +73,7 @@ export function EventPage() {
                                 ))}
                         </InsightBlock>
 
-                        <InsightBlock n={3} title="Какие последствия возможны?" origin="ai" footer={`Источник: расчёт по данным профиля · ${i.trace.find((s) => s.title.includes('Расчёт'))?.tool ?? ''}`}>
+                        <InsightBlock n={3} title="Какие последствия возможны?" origin="ai" footer={consequenceFooter(i)}>
                             {i.ai_inference
                                 .filter((x) => x.kind !== 'why_relevant')
                                 .map((x) => (
@@ -163,15 +163,27 @@ export function EventPage() {
                         </form>
                     </Panel>
                     <Panel title="Первоисточники">
-                        {i.sources.map((s) => (
-                            <a key={s.id} className="source" href={s.url} target="_blank" rel="noreferrer">
-                                <Icon name="link" size={18} />
-                                <span className="source__text">
-                                    <span className="text-tertiary-12">{s.publisher}</span>
-                                    <span className="source__title">{s.title}</span>
-                                </span>
-                            </a>
-                        ))}
+                        {i.sources.map((s) => {
+                            const body = (
+                                <>
+                                    <Icon name="link" size={18} />
+                                    <span className="source__text">
+                                        <span className="text-tertiary-12">{s.publisher}</span>
+                                        <span className="source__title">{s.title}</span>
+                                    </span>
+                                </>
+                            );
+                            // Без URL (бэкенд передал только id) — показываем источник, но не делаем его ссылкой
+                            return s.url ? (
+                                <a key={s.id} className="source" href={s.url} target="_blank" rel="noreferrer">
+                                    {body}
+                                </a>
+                            ) : (
+                                <div key={s.id} className="source source_nolink" title={s.id}>
+                                    {body}
+                                </div>
+                            );
+                        })}
                     </Panel>
                 </div>
             </div>
@@ -220,9 +232,15 @@ function featureNames(i: Insight, kind: string) {
 function agentSummary(i: Insight) {
     const steps = i.trace.length;
     const retries = i.trace.filter((s) => s.state === 'retry').length;
+    const total = i.trace.reduce((a, s) => a + s.time, 0);
     return [
         `${steps} ${plural(steps, 'шаг', 'шага', 'шагов')}`,
         retries ? `${retries} ${plural(retries, 'повторный поиск', 'повторных поиска', 'повторных поисков')}` : 'без повторных поисков',
-        sec(i.trace.reduce((a, s) => a + s.time, 0)),
+        ...(total ? [sec(total)] : []),
     ].join(' · ');
+}
+
+function consequenceFooter(i: Insight) {
+    const calc = i.trace.find((s) => s.title.includes('Расчёт'))?.tool;
+    return calc ? `Источник: расчёт по данным профиля · ${calc}` : `Признаки: ${featureNames(i, 'consequence_risk') || featureNames(i, 'consequence_opportunity')}`;
 }

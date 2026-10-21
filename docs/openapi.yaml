@@ -91,7 +91,7 @@ components:
       name: company_id
       in: query
       required: true
-      schema: { type: string, pattern: '^U-\d{5}$', example: U-10482 }
+      schema: { type: string, pattern: '^U[-_]\d+$', example: U_176 }
     Role:
       name: role
       in: query

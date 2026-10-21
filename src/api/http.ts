@@ -1,6 +1,10 @@
 import type { Api } from './types';
+import { toFeed, toInsight, toTrace } from './adapters/interpretation';
 
-/** HTTP-клиент по контракту docs/openapi.yaml */
+/**
+ * HTTP-клиент по контракту docs/openapi.yaml.
+ * Инсайты бэкенд может отдавать в insight.v1 или в формате «ВЫХОД» — адаптер приводит всё к insight.v1.
+ */
 export function createHttpApi(baseUrl: string): Api {
     const base = baseUrl.replace(/\/$/, '');
 
@@ -20,10 +24,10 @@ export function createHttpApi(baseUrl: string): Api {
 
     return {
         getCompanies: () => request('/companies'),
-        getFeed: (companyId, role) => request(`/feed?${qs({ company_id: companyId, role })}`),
-        getEvent: (eventId, companyId, role) =>
-            request(`/events/${encodeURIComponent(eventId)}?${qs({ company_id: companyId, role })}`),
+        getFeed: async (companyId, role) => toFeed(await request(`/feed?${qs({ company_id: companyId, role })}`), companyId, role),
+        getEvent: async (eventId, companyId, role) =>
+            toInsight(await request(`/events/${encodeURIComponent(eventId)}?${qs({ company_id: companyId, role })}`)),
         chat: (req) => request('/chat', { method: 'POST', body: JSON.stringify(req) }),
-        getTrace: (runId) => request(`/trace/${encodeURIComponent(runId)}`),
+        getTrace: async (runId) => toTrace(await request(`/trace/${encodeURIComponent(runId)}`)),
     };
 }

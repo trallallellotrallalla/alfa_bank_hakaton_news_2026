@@ -63,6 +63,33 @@ nginx отдаёт статику и проксирует `/api/*` на `API_UPS
 со ссылками `src` на `sources[]`, `ai_inference[]` с кодами признаков компании `features`, `actions[]` с ролями, `confidence`,
 `trace[]` (шаги агента: `title`, `tool`, `detail`, `time`, `state` = `done` / `retry` / `running`).
 
+## Формат «ВЫХОД» от бэкенда
+
+Пайплайн бэкенда может отдавать интерпретации в своём формате «ВЫХОД» (пример — [`docs/vyhod.example.json`](docs/vyhod.example.json),
+типы — [`src/types/interpretation.ts`](src/types/interpretation.ts)). Фронтенд сам распознаёт формат ответа и переводит его в insight.v1
+адаптером [`src/api/adapters/interpretation.ts`](src/api/adapters/interpretation.ts):
+
+| ВЫХОД | insight.v1 / экран |
+| --- | --- |
+| `event.news_id`, `event.title`, `event.published_at` | `event_id`, `title`, `published_at` |
+| `interpretation_id` | `run_id` — ключ трассы |
+| `what_happened` | `facts[]` — блок «Что произошло?», метка «Факт» |
+| `why_it_matters`, `attribution.model_inference` | `ai_inference[why_relevant]` — «Почему это важно», «Вывод AI» |
+| `risks[]`, `opportunities[]` | `ai_inference[consequence_*]` — «Какие последствия возможны?» |
+| `attribution.bank_view` (`chunk_id`, `doc_title`, `page`) | `bank_view[]` + источник «ЦМИ Альфа-Банка» — «Как это оценивает банк?» |
+| `recommended_actions[]` | `actions[]` — «Какие действия могут быть релевантны?» |
+| `sources[news / analytics]` | `sources[]` — «Первоисточники» |
+| `sources[client_signal]` | `features[]` — «Признаки, повлиявшие на вывод» |
+| `confidence` 0..1 | `confidence` high / medium / low + `relevance`, если бэкенд её не передал |
+
+Чего во ВЫХОДЕ нет, адаптер восстанавливает: `impact` — по рискам и возможностям, темы для фильтров — по заголовку,
+трассу — по `attribution` (с пометкой «восстановлено»). Если бэкенд передаст необязательные поля `relevance`, `impact`, `topics`,
+`trace`, `url` и `title` у источников, `signals` у выводов и `roles` у действий — адаптер возьмёт их вместо восстановленных.
+
+Эндпоинты `/feed`, `/events/{id}` и `/trace/{run_id}` могут возвращать как insight.v1, так и ВЫХОД (для `/feed` — массив или `{ items: [...] }`).
+В режиме `mock` пример ВЫХОДА показывается как компания **U_176 «ТрансМагистраль»** — её лента собрана из `docs/vyhod.example.json`
+через тот же адаптер. Чат (`POST /chat`) по-прежнему ждёт ответ в формате `ChatAnswer` из `docs/openapi.yaml`.
+
 ## API: моки или бэкенд
 
 Один флаг — `VITE_API_MODE` (см. [`.env.example`](.env.example)):

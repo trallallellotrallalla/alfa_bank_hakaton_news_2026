@@ -212,7 +212,7 @@ function AiAnswer({
     onAsk: (q: string) => void;
     onTrace: () => void;
 }) {
-    const firstSource = insight?.sources[0];
+    const firstSource = insight?.sources.find((s) => s.url);
     return (
         <div className="ai-answer">
             <div className="badges">
@@ -266,7 +266,7 @@ function AiAnswer({
                 <div className="citations">
                     {answer.citations.map((c) => {
                         const src = insight?.sources.find((s) => s.id === c.source_id);
-                        return src ? (
+                        return src?.url ? (
                             <a key={c.n} className="cite" href={src.url} target="_blank" rel="noreferrer">
                                 [{c.n}] {c.label}
                             </a>

@@ -83,8 +83,8 @@ export function TracePage() {
             <div className="metrics">
                 <Metric label="Шагов" value={String(t.steps.length)} />
                 <Metric label="Повторных поисков" value={String(t.retries)} />
-                <Metric label="Время" value={sec(t.duration_s)} />
-                <Metric label="Токены" value={t.tokens.toLocaleString('ru-RU')} />
+                <Metric label="Время" value={t.duration_s ? sec(t.duration_s) : '—'} />
+                <Metric label="Токены" value={t.tokens ? t.tokens.toLocaleString('ru-RU') : '—'} />
                 <Metric label="Модели" value={t.models} />
             </div>
 
@@ -145,7 +145,7 @@ function AgentStep({ step }: { step: TraceStep }) {
             <div className="agent-step__content">
                 <div className="row">
                     <span className="row__label text-primary-14 medium">{step.title}</span>
-                    <span className="text-tertiary-12">{step.state === 'running' ? 'выполняется…' : sec(step.time)}</span>
+                    <span className="text-tertiary-12">{step.state === 'running' ? 'выполняется…' : step.time ? sec(step.time) : ''}</span>
                 </div>
                 <span className="agent-step__tool">tool: {step.tool}</span>
                 <span className="text-secondary-13">{step.detail}</span>

@@ -15,6 +15,9 @@ import type {
 import { SCHEMA_VERSION } from '../types/insight';
 import { COMPANIES } from './companies';
 import { plural } from '../utils/format';
+import { interpretationToInsight } from '../api/adapters/interpretation';
+import type { Interpretation } from '../types/interpretation';
+import vyhodExample from '../../docs/vyhod.example.json';
 
 /**
  * Мок-данные в формате insight.v1.
@@ -853,7 +856,14 @@ function buildInsight(event: EventBase, it: CompanyInterpretation): Insight {
 }
 
 
+/**
+ * Ответы пайплайна бэкенда в формате «ВЫХОД» — проходят через тот же адаптер, что и в режиме http.
+ * Чтобы проверить новый ответ бэкенда, положите его в docs/ и добавьте в этот список.
+ */
+const BACKEND_OUTPUTS = [vyhodExample as Interpretation];
+
 /** Все инсайты: event × company */
-export const INSIGHTS: Insight[] = EVENTS.flatMap((event) =>
-    (INTERPRETATIONS[event.event_id] ?? []).map((it) => buildInsight(event, it)),
-);
+export const INSIGHTS: Insight[] = [
+    ...EVENTS.flatMap((event) => (INTERPRETATIONS[event.event_id] ?? []).map((it) => buildInsight(event, it))),
+    ...BACKEND_OUTPUTS.map(interpretationToInsight),
+];
