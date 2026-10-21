@@ -65,7 +65,7 @@ nginx отдаёт статику и проксирует `/api/*` на `API_UPS
 
 ## Формат «ВЫХОД» от бэкенда
 
-Пайплайн бэкенда может отдавать интерпретации в своём формате «ВЫХОД» (пример — [`docs/vyhod.example.json`](docs/vyhod.example.json),
+Пайплайн бэкенда может отдавать интерпретации в своём формате «ВЫХОД» (тестовые варианты — [`docs/vyhod-examples/`](docs/vyhod-examples),
 типы — [`src/types/interpretation.ts`](src/types/interpretation.ts)). Фронтенд сам распознаёт формат ответа и переводит его в insight.v1
 адаптером [`src/api/adapters/interpretation.ts`](src/api/adapters/interpretation.ts):
 
@@ -87,8 +87,21 @@ nginx отдаёт статику и проксирует `/api/*` на `API_UPS
 `trace`, `url` и `title` у источников, `signals` у выводов и `roles` у действий — адаптер возьмёт их вместо восстановленных.
 
 Эндпоинты `/feed`, `/events/{id}` и `/trace/{run_id}` могут возвращать как insight.v1, так и ВЫХОД (для `/feed` — массив или `{ items: [...] }`).
-В режиме `mock` пример ВЫХОДА показывается как компания **U_176 «ТрансМагистраль»** — её лента собрана из `docs/vyhod.example.json`
-через тот же адаптер. Чат (`POST /chat`) по-прежнему ждёт ответ в формате `ChatAnswer` из `docs/openapi.yaml`.
+В режиме `mock` тестовые варианты ВЫХОДА показываются как компания **U_176 «ТрансМагистраль»** — её лента собрана
+из `docs/vyhod-examples/*.json` через тот же адаптер. Новый файл в этой папке появится в ленте сам.
+
+### Тестовые варианты
+
+| Файл | Что проверяет |
+| --- | --- |
+| `01-key-rate.json` | Исходный ВЫХОД без изменений: плоские строки, одна позиция банка объектом |
+| `02-no-bank-view.json` | `bank_view: null` — блок «Позиция банка» пуст, метки «Позиция банка» нет |
+| `03-opportunity-only.json` | Только возможности, рисков нет — тип влияния «Возможность» |
+| `04-recommended-format.json` | Рекомендованный формат: `relevance`, `impact`, факты с `src`, две позиции банка, `signals`, `roles`, источники с URL, трасса с повторным поиском |
+| `05-minimal.json` | Только обязательные поля: нет рисков, действий, аналитики и сигналов |
+
+Автотесты (`npm test`, файл [`src/api/adapters/interpretation.test.ts`](src/api/adapters/interpretation.test.ts)) прогоняют каждый вариант
+через адаптер и проверяют результат по `docs/insight.v1.schema.json`. Чат (`POST /chat`) по-прежнему ждёт ответ в формате `ChatAnswer` из `docs/openapi.yaml`.
 
 ## API: моки или бэкенд
 
@@ -151,3 +164,4 @@ docker/         конфиг nginx
 | `npm run build` | Проверка типов и production-сборка в `dist/` |
 | `npm run preview` | Локальный просмотр сборки |
 | `npm run typecheck` | Только проверка типов |
+| `npm test` | Автотесты адаптера ВЫХОД → insight.v1 |

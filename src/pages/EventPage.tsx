@@ -74,13 +74,17 @@ export function EventPage() {
                         </InsightBlock>
 
                         <InsightBlock n={3} title="Какие последствия возможны?" origin="ai" footer={consequenceFooter(i)}>
-                            {i.ai_inference
-                                .filter((x) => x.kind !== 'why_relevant')
-                                .map((x) => (
-                                    <p key={x.text}>
-                                        <b>{x.kind === 'consequence_risk' ? 'Риск' : 'Возможность'}:</b> {x.text}
-                                    </p>
-                                ))}
+                            {i.ai_inference.some((x) => x.kind !== 'why_relevant') ? (
+                                i.ai_inference
+                                    .filter((x) => x.kind !== 'why_relevant')
+                                    .map((x) => (
+                                        <p key={x.text}>
+                                            <b>{x.kind === 'consequence_risk' ? 'Риск' : 'Возможность'}:</b> {x.text}
+                                        </p>
+                                    ))
+                            ) : (
+                                <p className="text-secondary-14">Агент не выделил прямых рисков и возможностей для компании.</p>
+                            )}
                         </InsightBlock>
 
                         <InsightBlock
@@ -100,13 +104,17 @@ export function EventPage() {
                         </InsightBlock>
 
                         <InsightBlock n={5} title="Какие действия могут быть релевантны?" origin="ai" footer={`Для роли «${ROLE_LABEL[role]}» · следующий шаг — расчёт с менеджером банка`}>
-                            <ul className="actions">
-                                {i.actions.map((a) => (
-                                    <li key={a.id} className={a.roles?.includes(role) ? 'actions__item_role' : undefined}>
-                                        {a.text}
-                                    </li>
-                                ))}
-                            </ul>
+                            {i.actions.length ? (
+                                <ul className="actions">
+                                    {i.actions.map((a) => (
+                                        <li key={a.id} className={a.roles?.includes(role) ? 'actions__item_role' : undefined}>
+                                            {a.text}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-secondary-14">Действий не требуется — событие для информации.</p>
+                            )}
                         </InsightBlock>
 
                         <InsightBlock
@@ -226,7 +234,7 @@ function sourceNames(i: Insight, ids: string[], titles = false) {
 function featureNames(i: Insight, kind: string) {
     const codes = new Set(i.ai_inference.filter((x) => x.kind === kind).flatMap((x) => x.features));
     const labels = i.features.filter((f) => codes.has(f.code)).map((f) => f.label);
-    return (labels.length ? labels : [...codes]).join(' · ');
+    return (labels.length ? labels : [...codes]).join(' · ') || 'не переданы бэкендом';
 }
 
 function agentSummary(i: Insight) {

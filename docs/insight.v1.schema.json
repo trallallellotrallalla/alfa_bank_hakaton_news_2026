@@ -38,7 +38,7 @@
         "properties": {
           "kind": { "enum": ["why_relevant", "consequence_risk", "consequence_opportunity"] },
           "text": { "type": "string" },
-          "features": { "type": "array", "minItems": 1, "items": { "type": "string" }, "description": "Коды признаков компании (Feature.code)" },
+          "features": { "type": "array", "items": { "type": "string" }, "description": "Коды признаков компании (Feature.code). Пусто — бэкенд не передал сигналы клиента, интерфейс пишет «не переданы»" },
           "src": { "type": "array", "items": { "type": "string" } }
         }
       }
@@ -62,7 +62,7 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "kind", "publisher", "title", "url", "published_at"],
+        "required": ["id", "kind", "publisher", "title", "published_at"],
         "additionalProperties": false,
         "properties": {
           "id": { "type": "string" },

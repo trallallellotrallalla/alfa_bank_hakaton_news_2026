@@ -117,7 +117,7 @@ function buildSources(i: Interpretation, bank: BankViewItem[]): { sources: Sourc
                 kind: 'news',
                 publisher: s.publisher ?? DEFAULT_PUBLISHER.news,
                 title: s.title ?? (String(s.id) === String(i.event.news_id) ? i.event.title : `Новость #${s.id}`),
-                url: s.url ?? '',
+                url: s.url,
                 published_at: s.published_at ? toIso(s.published_at) : published,
             });
         } else if (s.type === 'analytics') {
@@ -138,7 +138,6 @@ function buildSources(i: Interpretation, bank: BankViewItem[]): { sources: Sourc
             kind: 'news',
             publisher: DEFAULT_PUBLISHER.news,
             title: i.event.title,
-            url: '',
             published_at: published,
         });
     }
@@ -157,7 +156,7 @@ function analyticsSource(
         kind: 'bank_research',
         publisher: s.publisher ?? DEFAULT_PUBLISHER.analytics,
         title: page ? `${title}, с. ${page}` : title,
-        url: s.url ?? '',
+        url: s.url,
         published_at: s.published_at ? toIso(s.published_at) : published,
     };
 }

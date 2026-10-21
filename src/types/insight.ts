@@ -33,7 +33,8 @@ export interface Source {
     kind: SourceKind;
     publisher: string;
     title: string;
-    url: string;
+    /** Ссылка на первоисточник; без неё источник показывается, но не ссылкой */
+    url?: string;
     published_at: string; // ISO 8601
 }
 
