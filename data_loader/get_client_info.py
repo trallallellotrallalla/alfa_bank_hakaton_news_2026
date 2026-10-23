@@ -17,7 +17,7 @@ DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NA
 
 def get_client_info(client_id: str) -> dict:
     """
-    Возвращает словарь client в формате, который ожидает LLM-модуль.
+    Возвращает словарь client.
     """
     conn = psycopg2.connect(DATABASE_URL)
     conn.autocommit = True

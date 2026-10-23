@@ -3,7 +3,6 @@ from psycopg2.extras import execute_values
 from .config import get_connection
 
 
-# --- Утилиты ---
 def _clean_columns(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = [str(c).strip().lower().replace('"', '').replace("'", "") for c in df.columns]
     return df
@@ -151,7 +150,7 @@ def load_payments(conn, path: str) -> int:
 
 
 def load_all_data(csv_companies: str, csv_persons: str, csv_payments: str):
-    """Полный цикл загрузки данных из CSV в БД."""
+    """Загрузка данных CSV -> БД."""
     conn = get_connection()
     try:
         with conn.cursor() as cur:
