@@ -3,6 +3,7 @@ from psycopg2.extras import execute_values
 from .config import get_connection
 
 
+# --- Утилиты ---
 def _clean_columns(df: pd.DataFrame) -> pd.DataFrame:
     df.columns = [str(c).strip().lower().replace('"', '').replace("'", "") for c in df.columns]
     return df
@@ -60,6 +61,7 @@ def _ensure_companies_exist(conn, missing_uids: set, source_name: str) -> int:
     return len(rows)
 
 
+# --- Лоадеры ---
 def load_companies(conn, path: str) -> int:
     df = _read_csv_clean(path)
     if "synthetic_u" not in df.columns: raise ValueError("Нет synthetic_u")
@@ -149,7 +151,7 @@ def load_payments(conn, path: str) -> int:
 
 
 def load_all_data(csv_companies: str, csv_persons: str, csv_payments: str):
-    """Загрузка данных CSV -> БД."""
+    """Полный цикл загрузки данных из CSV в БД."""
     conn = get_connection()
     try:
         with conn.cursor() as cur:

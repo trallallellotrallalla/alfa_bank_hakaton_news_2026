@@ -24,7 +24,7 @@ def get_client_info(client_id: str) -> dict:
 
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # Получаем базовые данные о компании
+            # 1. Получаем базовые данные о компании
             cur.execute("""
                 SELECT 
                     uid, 
@@ -50,7 +50,7 @@ def get_client_info(client_id: str) -> dict:
                 "factoring": row["has_factoring"]
             }
 
-            # Получаем топ-контрагентов (из материализованного представления)
+            # 2. Получаем топ-контрагентов (из материализованного представления)
             cur.execute("""
                 SELECT counterparty 
                 FROM top_counterparties 
@@ -59,7 +59,7 @@ def get_client_info(client_id: str) -> dict:
             """, (client_id,))
             top_counterparties = [r["counterparty"] for r in cur.fetchall()]
 
-            # Получаем связанные компании (через общих физлиц)
+            # 3. Получаем связанные компании (через общих физлиц)
             cur.execute("""
                 SELECT DISTINCT pc2.uid 
                 FROM person_company pc1
@@ -69,6 +69,7 @@ def get_client_info(client_id: str) -> dict:
             """, (client_id, client_id))
             linked_companies = [r["uid"] for r in cur.fetchall()]
 
+            # 4. Получаем регионы физлиц (связей)
             # Считаем долю каждого региона от общего числа связанных людей
             cur.execute("""
                 WITH people AS (
@@ -89,7 +90,8 @@ def get_client_info(client_id: str) -> dict:
             """, (client_id,))
             people_regions = [{"region": r["region"], "share": float(r["share"])} for r in cur.fetchall()]
 
-            # Вычисляем сигналы (эвристики на основе продуктов и данных)
+            # 5. Вычисляем сигналы (эвристики на основе продуктов и данных)
+            # В реальности это должно быть вынесено в отдельный пайплайн, но для прототипа сойдет
             credit_dependency = "high" if row["has_loa"] and row["revenue_rub"] < 20e9 else (
                 "medium" if row["has_loa"] else "low")
             # Валютная экспозиция: если есть факторинг или компания связана с импортом (упрощенно)
@@ -119,6 +121,7 @@ def get_client_info(client_id: str) -> dict:
 
 
 if __name__ == "__main__":
-    test_id = "U_161022"
+    # Пример использования: берем случайного клиента
+    test_id = "U_131"
     profile = get_client_info(test_id)
     print(json.dumps(profile, ensure_ascii=False, indent=2))
