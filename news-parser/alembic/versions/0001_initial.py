@@ -10,7 +10,7 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy.dialects import postgresql as pg
 
 from alembic import op
-from news_parser.settings import get_settings
+from news_parser.core.settings import get_settings
 
 revision = "0001"
 down_revision = None

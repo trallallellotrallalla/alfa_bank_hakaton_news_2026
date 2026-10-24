@@ -1,0 +1,14 @@
+# Контекст сборки — корень репозитория. В образ news-parser уходит только перечисленное
+# ниже (белый список): ни .env с ключами, ни .venv, ни data/, ни .git сюда не попадут.
+*
+!news-parser/pyproject.toml
+!news-parser/uv.lock
+!news-parser/README.md
+!news-parser/src
+!news-parser/alembic
+!news-parser/alembic.ini
+!news-parser/docker-entrypoint.sh
+!data_loader
+**/__pycache__
+**/*.pyc
+**/.DS_Store

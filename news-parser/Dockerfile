@@ -1,4 +1,6 @@
-# Образ модуля news-parser. Сборка: docker build -t news-parser .
+# Образ модуля news-parser. Собирается из КОРНЯ репозитория (рядом лежит data_loader):
+#   docker build -f news-parser/Dockerfile -t news-parser .
+# Работает и на классическом сборщике, и на BuildKit (buildx не обязателен).
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -7,32 +9,45 @@ ENV PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/app/.venv \
     EMBEDDING_CACHE_DIR=/models \
-    PATH="/app/.venv/bin:$PATH"
+    PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH=/app
 
-RUN pip install --no-cache-dir uv==0.13.4
+# Пользователь и папка модели создаются сразу: без `chown -R` в конце, который
+# копирует в новый слой все библиотеки и модель (+1.6 ГБ к образу).
+RUN pip install --no-cache-dir uv==0.13.4 \
+    && useradd --create-home --uid 1000 app \
+    && mkdir -p /models && chown app /models
 
 WORKDIR /app
 
-# Сначала только зависимости — этот слой кешируется, пока не меняется uv.lock
-COPY pyproject.toml uv.lock README.md ./
+# Порядок слоёв — от редко меняющихся к часто меняющимся, чтобы правка кода
+# не пересобирала зависимости и не скачивала модель заново.
+
+# 1. Зависимости — пересобираются только при изменении uv.lock
+COPY news-parser/pyproject.toml news-parser/uv.lock news-parser/README.md ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY src ./src
-COPY alembic ./alembic
-COPY alembic.ini docker-entrypoint.sh ./
-RUN uv sync --frozen --no-dev && chmod +x docker-entrypoint.sh
-
-# Модель эмбеддингов скачивается при сборке, а не при старте контейнера:
-# старт быстрый и не зависит от доступа к HuggingFace.
+# 2. Модель эмбеддингов — скачивается при сборке, а не при старте контейнера
+#    (старт быстрый и не зависит от HuggingFace); пересобирается только при смене модели
 ARG EMBEDDING_MODEL=sentence-transformers/paraphrase-multilingual-mpnet-base-v2
-ARG EMBEDDING_DIM=768
-RUN EMBEDDING_MODEL=$EMBEDDING_MODEL EMBEDDING_DIM=$EMBEDDING_DIM python -m news_parser.cli warmup
+USER app
+RUN python -c "from fastembed import TextEmbedding; TextEmbedding('${EMBEDDING_MODEL}', cache_dir='/models')"
+USER root
 
-RUN useradd --create-home --uid 1000 app && chown -R app /app /models
+# 3. Код — меняется чаще всего
+COPY news-parser/src ./src
+# библиотека модуля клиентских данных (get_client_info) — из корня репо
+COPY data_loader ./data_loader
+COPY news-parser/alembic ./alembic
+COPY news-parser/alembic.ini news-parser/docker-entrypoint.sh ./
+# sed: если репозиторий клонирован на Windows, Git мог заменить переводы строк на CRLF —
+# с ними скрипт в Linux не запустится («not found» / «bad interpreter»)
+RUN uv sync --frozen --no-dev && sed -i 's/\r$//' docker-entrypoint.sh && chmod +x docker-entrypoint.sh
+
 USER app
 
-EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=4).status == 200 else 1)"
+# HTTP нет: здоровье = доступна ли БД (код выхода CLI-команды health)
+HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=3 \
+    CMD python -m news_parser.cli health > /dev/null || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]

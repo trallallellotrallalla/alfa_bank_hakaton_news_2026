@@ -1,15 +1,15 @@
-"""Фоновые задачи внутри процесса сервиса (без системного cron).
+"""Расписание фоновых задач: первый запуск, плановый сбор, дообработка через LLM.
 
-Важно: запускайте сервис в ОДНОМ процессе uvicorn (без --workers N),
-иначе каждый воркер запустит свой планировщик и сбор пойдёт параллельно.
+Запускает его воркер (news_parser.worker) — в ОДНОМ экземпляре, иначе сбор пойдёт параллельно.
 """
 
 import logging
 from datetime import UTC, datetime, timedelta
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.base import BaseScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 
-from news_parser.services import get_services
+from news_parser.core.container import get_services
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +20,13 @@ def _collect() -> None:
 
 
 def _reprocess() -> None:
-    log.info("дообработка pending_llm: %s", get_services().pipeline.reprocess_pending())
+    services = get_services()
+    log.info("дообработка pending_llm: %s", services.pipeline.reprocess_pending())
+    # аналитика, которую не удалось загрузить (кончился бюджет LLM, API лежал), догружается тут;
+    # уже загруженные документы пропускаются без затрат
+    result = services.load_analytics()
+    if result["loaded"] or result["errors"]:
+        log.info("аналитика: %s", result)
 
 
 def _startup() -> None:
@@ -29,12 +35,14 @@ def _startup() -> None:
     services.embedder.warmup()
     if services.settings.load_analytics_on_start:
         log.info("аналитика Альфа-Банка: %s", services.load_analytics())
+    # статьи, собранные до появления чанков, нарезаются один раз
+    log.info("чанки статей: %s", services.pipeline.backfill_chunks())
     _collect()
 
 
-def build_scheduler() -> BackgroundScheduler:
+def build_scheduler() -> BaseScheduler:
     settings = get_services().settings
-    scheduler = BackgroundScheduler(timezone="UTC", job_defaults={"coalesce": True, "max_instances": 1})
+    scheduler = BlockingScheduler(timezone="UTC", job_defaults={"coalesce": True, "max_instances": 1})
     scheduler.add_job(_startup, "date", run_date=datetime.now(UTC) + timedelta(seconds=2), id="startup")
     scheduler.add_job(
         _collect,

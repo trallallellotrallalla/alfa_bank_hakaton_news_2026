@@ -1,0 +1,6 @@
+# Скрипты, которые выполняются внутри Linux-контейнера, всегда с переводами строк LF —
+# даже если репозиторий клонирован на Windows (иначе entrypoint не запустится).
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

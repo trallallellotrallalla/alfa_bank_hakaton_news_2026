@@ -5,8 +5,6 @@ description = "Модуль сбора, очистки, классификаци
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.30",
     "pydantic>=2.8",
     "pydantic-settings>=2.4",
     "sqlalchemy>=2.0.32",
@@ -18,9 +16,14 @@ dependencies = [
     "trafilatura>=1.12",
     "apscheduler>=3.10,<4",
     "pypdf>=4.3",
+    "pillow>=10.0",  # картинки страниц PDF-сканов для Qwen3-VL
     "fastembed>=0.4",
     "pyyaml>=6.0",
     "numpy>=1.26",
+    # зависимости библиотеки data_loader (модуль клиентских данных, корень репо)
+    "psycopg2-binary>=2.9",
+    "python-dotenv>=1.0",
+    "pandas>=2.2",
 ]
 
 [dependency-groups]

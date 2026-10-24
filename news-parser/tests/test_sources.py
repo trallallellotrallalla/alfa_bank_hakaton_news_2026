@@ -1,7 +1,7 @@
-from news_parser.analytics.alfa_loader import chunk_pages
-from news_parser.collectors.base import load_collectors
-from news_parser.collectors.cbr import parse_rates
-from news_parser.settings import get_settings
+from news_parser.parser.analytics_loader import chunk_pages
+from news_parser.parser.collectors.base import load_collectors
+from news_parser.parser.collectors.cbr import parse_rates
+from news_parser.core.settings import get_settings
 
 CBR_XML = """<?xml version="1.0" encoding="windows-1251"?>
 <ValCurs Date="21.10.2026" name="Foreign Currency Market">
@@ -29,3 +29,14 @@ def test_chunker_respects_size_and_pages():
     assert len(chunks) > 3
     assert all(len(c.text) <= 450 for c in chunks)
     assert chunks[0].page_from == 1 and chunks[-1].page_to == 2
+
+
+def test_text_version_keeps_pages_and_replaces_scanned_pdf(tmp_path):
+    from news_parser.parser.analytics_loader import read_pages
+
+    txt = tmp_path / "doc.txt"
+    txt.write_text("Ключевая ставка ЦБ РФ\n\nСтраница один.\fСтраница два.", encoding="utf-8")
+    pages = read_pages(txt)
+    assert len(pages) == 2 and pages[0].startswith("Ключевая ставка")
+    chunks = chunk_pages(pages, max_chars=400)
+    assert chunks[-1].page_to == 2

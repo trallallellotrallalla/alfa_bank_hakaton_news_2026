@@ -1,0 +1,8 @@
+"""Логи в stdout — их собирает Docker (docker logs)."""
+
+import logging
+
+
+def setup_logging(level: str) -> None:
+    logging.basicConfig(level=level.upper(), format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)

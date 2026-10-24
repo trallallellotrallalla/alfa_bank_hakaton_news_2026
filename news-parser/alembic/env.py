@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from sqlalchemy import create_engine, text
 
 from alembic import context
-from news_parser.settings import get_settings
+from news_parser.core.settings import get_settings
 from news_parser.storage.models import Base
 
 config = context.config

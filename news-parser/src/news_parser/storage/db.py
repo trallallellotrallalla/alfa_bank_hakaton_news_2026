@@ -7,7 +7,7 @@ from functools import lru_cache
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from news_parser.settings import get_settings
+from news_parser.core.settings import get_settings
 
 
 @lru_cache

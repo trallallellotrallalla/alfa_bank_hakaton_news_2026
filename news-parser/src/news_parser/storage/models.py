@@ -3,16 +3,19 @@
 
 articles         — каждая скачанная статья (в т.ч. дубли и отфильтрованные — чтобы не качать повторно)
 events           — событие = кластер статей об одном и том же; основная единица выдачи
+article_chunks   — фрагменты статей с векторами (контекст для агента)
+analytics_documents — документы аналитики Альфа-Банка: выжимка, позиция банка, теги, дата
 analytics_chunks — фрагменты аналитики Альфа-Банка
 llm_calls        — журнал обращений к LLM (аудит + учёт дневного бюджета токенов)
 """
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -26,7 +29,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-from news_parser.settings import get_settings
+from news_parser.core.settings import get_settings
 
 _settings = get_settings()
 EMBEDDING_DIM = _settings.embedding_dim
@@ -98,6 +101,44 @@ class Article(Base):
     cluster_similarity: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     event: Mapped[Event | None] = relationship(back_populates="articles")
+
+
+class ArticleChunk(Base):
+    """Фрагмент статьи (2–4 предложения) со своим вектором. Именно чанки отдаются
+    агенту как контекст: локальная LLM читает их вместо того, чтобы ходить по URL."""
+
+    __tablename__ = "article_chunks"
+    __table_args__ = (UniqueConstraint("article_id", "chunk_index"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    article_id: Mapped[int] = mapped_column(ForeignKey("articles.id", ondelete="CASCADE"), index=True)
+    event_id: Mapped[int | None] = mapped_column(
+        ForeignKey("events.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class AnalyticsDocument(Base):
+    """Документ аналитики целиком: выжимка позиции банка, теги, дата — для подбора в два шага
+    (сначала документ, потом фрагменты в нём). Профиль строит LLM, без неё — правила."""
+
+    __tablename__ = "analytics_documents"
+
+    doc_id: Mapped[str] = mapped_column(String(64), primary_key=True)  # sha256 исходного файла
+    file_name: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text)
+    published_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)  # главные тезисы банка
+    stance: Mapped[str | None] = mapped_column(String(16), nullable=True)  # hawkish|dovish|neutral|risk
+    macro_factors: Mapped[list[str]] = _str_array()
+    industries: Mapped[list[str]] = _str_array()
+    text_method: Mapped[str] = mapped_column(String(32))  # text_layer | vision | ocr_txt | text
+    profile_method: Mapped[str] = mapped_column(String(16))  # llm | rules
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class AnalyticsChunk(Base):

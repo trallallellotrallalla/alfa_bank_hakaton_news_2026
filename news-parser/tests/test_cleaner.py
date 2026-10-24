@@ -1,4 +1,4 @@
-from news_parser.processing.cleaner import content_hash, normalize_text, strip_html
+from news_parser.parser.cleaner import content_hash, normalize_text, strip_html
 
 
 def test_normalize_collapses_whitespace():
