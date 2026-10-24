@@ -98,10 +98,17 @@ function toConfidence(c: Interpretation['confidence']): Confidence {
     return c >= 0.75 ? 'high' : c >= 0.5 ? 'medium' : 'low';
 }
 
+/**
+ * Запасной ответ интерпретатора (fallback_output) кладёт в позицию банка заглушку
+ * «Позиция банка не сформирована.» с chunk_id "none" — это не позиция банка, отбрасываем.
+ */
+const isBankViewStub = (b: BankViewItem) =>
+    b.chunk_id === 'none' || /^позиция банка не сформирована/i.test(b.text.trim());
+
 function bankViewItems(i: Interpretation): BankViewItem[] {
     const raw = i.bank_view ?? i.attribution?.bank_view;
     if (!raw) return [];
-    return Array.isArray(raw) ? raw : [raw];
+    return (Array.isArray(raw) ? raw : [raw]).filter((b) => !isBankViewStub(b));
 }
 
 function buildSources(i: Interpretation, bank: BankViewItem[]): { sources: Source[]; features: Feature[] } {
@@ -121,6 +128,7 @@ function buildSources(i: Interpretation, bank: BankViewItem[]): { sources: Sourc
                 published_at: s.published_at ? toIso(s.published_at) : published,
             });
         } else if (s.type === 'analytics') {
+            if (s.chunk_id === 'none') continue;
             const fromBank = bank.find((b) => b.chunk_id === s.chunk_id);
             add(analyticsSource(s, fromBank, published));
         } else {
@@ -269,7 +277,7 @@ export function interpretationToInsight(i: Interpretation): Insight {
     const partial: Omit<Insight, 'trace' | 'basis'> = {
         schema: SCHEMA_VERSION,
         event_id: String(newsId),
-        run_id: i.interpretation_id,
+        run_id: String(i.interpretation_id),
         company_id: i.client_id,
         title: i.event.title,
         summary: i.event.summary ?? facts[0]?.text.split(/(?<=\.)\s/)[0] ?? '',

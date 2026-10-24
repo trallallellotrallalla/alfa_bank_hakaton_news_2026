@@ -99,6 +99,7 @@ nginx отдаёт статику и проксирует `/api/*` на `API_UPS
 | `03-opportunity-only.json` | Только возможности, рисков нет — тип влияния «Возможность» |
 | `04-recommended-format.json` | Рекомендованный формат: `relevance`, `impact`, факты с `src`, две позиции банка, `signals`, `roles`, источники с URL, трасса с повторным поиском |
 | `05-minimal.json` | Только обязательные поля: нет рисков, действий, аналитики и сигналов |
+| `06-interpreter-fallback.json` | Запасной ответ интерпретатора (`fallback_output`, ветка `ml`): числовой `interpretation_id`, заглушка вместо позиции банка, `confidence: 0` — в ленту не попадает |
 
 Автотесты (`npm test`, файл [`src/api/adapters/interpretation.test.ts`](src/api/adapters/interpretation.test.ts)) прогоняют каждый вариант
 через адаптер и проверяют результат по `docs/insight.v1.schema.json`. Чат (`POST /chat`) по-прежнему ждёт ответ в формате `ChatAnswer` из `docs/openapi.yaml`.

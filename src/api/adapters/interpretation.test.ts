@@ -29,13 +29,14 @@ function expectConsistent(i: Insight) {
 }
 
 describe('тестовые варианты ВЫХОДА', () => {
-    it('найдены все 5 вариантов', () => {
+    it('найдены все 6 вариантов', () => {
         expect(Object.keys(VARIANTS).sort()).toEqual([
             '01-key-rate',
             '02-no-bank-view',
             '03-opportunity-only',
             '04-recommended-format',
             '05-minimal',
+            '06-interpreter-fallback',
         ]);
     });
 
@@ -187,12 +188,33 @@ describe('05-minimal — только обязательные поля', () => 
     });
 });
 
+describe('06-interpreter-fallback — запасной ответ интерпретатора из ветки ml', () => {
+    const i = interpretationToInsight(variant('06-interpreter-fallback'));
+
+    it('числовой interpretation_id становится строковым run_id', () => {
+        expect(i.run_id).toBe('482913074561238');
+        expect(i.event_id).toBe('1006');
+    });
+
+    it('заглушка «Позиция банка не сформирована» не выдаётся за позицию банка', () => {
+        expect(i.bank_view).toEqual([]);
+        expect(i.sources.map((s) => s.id)).toEqual(['news:1006']);
+    });
+
+    it('нулевая уверенность → низкая релевантность, событие не попадает в ленту', async () => {
+        expect(i.confidence).toBe('low');
+        expect(i.relevance).toBe(0);
+        const feed = await mockApi.getFeed('U_176', 'cfo');
+        expect(feed.items.map((x) => x.event_id)).not.toContain('1006');
+    });
+});
+
 describe('нормализация ответов API', () => {
     const all = Object.keys(VARIANTS).map(variant);
 
     it('/feed: массив ВЫХОДов сортируется по релевантности', () => {
         const feed = toFeed(all, 'U_176', 'cfo');
-        expect(feed.items.map((x) => x.event_id)).toEqual(['1004', '1001', '1002', '1003', '1005']);
+        expect(feed.items.map((x) => x.event_id)).toEqual(['1004', '1001', '1002', '1003', '1005', '1006']);
         expect(feed.company_id).toBe('U_176');
     });
 
@@ -212,7 +234,7 @@ describe('нормализация ответов API', () => {
         expect(t.duration_s).toBe(9.1);
     });
 
-    it('мок-лента U_176 показывает все варианты', async () => {
+    it('мок-лента U_176 показывает все варианты, кроме запасного ответа', async () => {
         const feed = await mockApi.getFeed('U_176', 'cfo');
         expect(feed.items).toHaveLength(5);
     });

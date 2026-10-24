@@ -40,7 +40,8 @@ export interface TraceStepIn {
 }
 
 export interface Interpretation {
-    interpretation_id: string;
+    /** Интерпретатор из ветки ml отдаёт число, другие версии — строку */
+    interpretation_id: string | number;
     client_id: string;
     event: {
         news_id: string | number;
