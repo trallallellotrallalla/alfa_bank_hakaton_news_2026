@@ -1,0 +1,35 @@
+{
+  "name": "alfa-news-insight",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Новостная аналитика для принятия бизнес-решений — фронтенд-прототип для Альфа-Бизнес (Альфа Хак)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@alfalab/core-components-button": "13.2.4",
+    "@alfalab/core-components-checkbox": "6.3.2",
+    "@alfalab/core-components-input": "17.2.2",
+    "@alfalab/core-components-status": "5.1.1",
+    "@alfalab/core-components-switch": "6.2.3",
+    "@alfalab/core-components-vars": "11.4.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router-dom": "7.18.4"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}

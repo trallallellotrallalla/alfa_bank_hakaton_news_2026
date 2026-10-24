@@ -1,0 +1,59 @@
+{
+  "interpretation_id": "INT_004",
+  "client_id": "U_176",
+  "event": {
+    "news_id": "1004",
+    "title": "С 1 января 2027 года вырастут ставки платы в системе «Платон»",
+    "published_at": "2026-10-08T15:20:00+03:00",
+    "summary": "Тариф за проезд грузовиков массой свыше 12 т по федеральным трассам вырастет на 8%."
+  },
+  "relevance": 0.91,
+  "impact": "risk",
+  "topics": ["regulation"],
+  "what_happened": [
+    { "text": "Правительство утвердило индексацию платы в системе «Платон» на 8% с 1 января 2027 года.", "src": ["news:1004"] },
+    { "text": "Индексация касается грузовиков массой свыше 12 тонн на федеральных трассах.", "src": ["news:1004b"] }
+  ],
+  "bank_view": [
+    { "text": "Рост транспортных тарифов в 2027 году банк учитывает в прогнозе инфляции издержек на уровне 7–9%.", "src": ["analytics:macro_2027::p7::c1"] },
+    { "text": "Маржинальность автоперевозчиков в 2027 году ожидается на 1–1,5 п.п. ниже, чем в 2026 году.", "src": ["analytics:transport_review::p3::c4"] }
+  ],
+  "why_it_matters": {
+    "text": "Парк компании — 240 грузовиков свыше 12 т, основная часть рейсов идёт по федеральным трассам.",
+    "signals": ["fleet_heavy_trucks", "federal_routes_share"]
+  },
+  "risks": [
+    { "text": "Рост расходов на «Платон» примерно на 9 млн ₽ в год.", "signals": ["fleet_heavy_trucks"] },
+    { "text": "Снижение маржи по долгосрочным контрактам с фиксированной ценой.", "signals": ["fixed_price_contracts"] }
+  ],
+  "opportunities": [
+    { "text": "Аргумент для индексации тарифов в новых договорах с 2027 года.", "signals": ["fixed_price_contracts"] }
+  ],
+  "recommended_actions": [
+    { "text": "Заложить индексацию «Платона» в бюджет 2027 года.", "roles": ["cfo"] },
+    { "text": "Добавить в новые договоры оговорку об изменении тарифов.", "roles": ["ceo", "procurement"] }
+  ],
+  "sources": [
+    { "type": "news", "id": "1004", "title": "Плата в «Платоне» вырастет на 8%", "publisher": "Интерфакс", "url": "https://www.interfax.ru/business/", "published_at": "2026-10-08T15:20:00+03:00" },
+    { "type": "news", "id": "1004b", "title": "Постановление об индексации платы за проезд грузовиков", "publisher": "Правительство РФ", "url": "http://government.ru/docs/", "published_at": "2026-10-08T12:00:00+03:00" },
+    { "type": "analytics", "chunk_id": "macro_2027::p7::c1", "doc_title": "Макропрогноз на 2027 год", "page": 7, "url": "https://alfabank.ru/corporate/" },
+    { "type": "analytics", "chunk_id": "transport_review::p3::c4", "doc_title": "Обзор отрасли: грузоперевозки", "page": 3, "url": "https://alfabank.ru/corporate/" },
+    { "type": "client_signal", "id": "fleet_heavy_trucks", "label": "Парк грузовиков свыше 12 т", "weight": 0.94 },
+    { "type": "client_signal", "id": "federal_routes_share", "label": "Доля рейсов по федеральным трассам", "weight": 0.71 },
+    { "type": "client_signal", "id": "fixed_price_contracts", "label": "Долгосрочные контракты с фиксированной ценой", "weight": 0.52 }
+  ],
+  "confidence": "high",
+  "trace": [
+    { "title": "Профиль клиента", "tool": "get_client_profile(U_176)", "detail": "ОКВЭД 49.41 · 240 грузовиков свыше 12 т · 6 контрактов с фиксированной ценой.", "time": 0.3, "state": "done" },
+    { "title": "Поиск новостей", "tool": "news_search('Платон тариф', 72h)", "detail": "Найдено 3 публикации, 1 дубль объединён.", "time": 1.2, "state": "done" },
+    { "title": "RAG по аналитике Альфа-Банка", "tool": "rag_alfa_research(k=5)", "detail": "2 релевантных чанка: «Макропрогноз на 2027 год», «Обзор отрасли: грузоперевозки».", "time": 1.6, "state": "done" },
+    { "title": "Самопроверка", "tool": "verifier → news_search(source='government.ru')", "detail": "В новости указано 10%, в постановлении — 8%. Взята цифра из первоисточника.", "time": 2.1, "state": "retry" },
+    { "title": "Расчёт влияния", "tool": "calc_toll_impact(trucks=240, Δ=8%)", "detail": "≈ 9 млн ₽ дополнительных расходов в год.", "time": 0.1, "state": "done" },
+    { "title": "Сборка ответа", "tool": "llm(schema=ВЫХОД)", "detail": "2 факта из 2 источников, 2 позиции банка, 4 вывода, 2 действия.", "time": 3.8, "state": "done" }
+  ],
+  "suggested_questions": [
+    "Сколько мы доплатим за «Платон» в 2027 году?",
+    "Какие контракты стоит пересмотреть первыми?",
+    "Что пишут первоисточники?"
+  ]
+}

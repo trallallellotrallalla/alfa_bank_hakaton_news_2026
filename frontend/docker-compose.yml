@@ -1,0 +1,10 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        VITE_API_MODE: ${VITE_API_MODE:-mock}
+    ports:
+      - "8080:80"
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:-http://backend:8000}
