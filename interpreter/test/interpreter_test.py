@@ -18,10 +18,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_ROOT))
+_TEST_DIR = Path(__file__).resolve().parent
+_MODULE_ROOT = _TEST_DIR.parent
+_PROJECT_ROOT = _MODULE_ROOT.parent
+sys.path.insert(0, str(_MODULE_ROOT))
 
-load_dotenv(_ROOT / ".env")
+load_dotenv(_PROJECT_ROOT / ".env")
 
 from interpreter import (
     ALLOWED_MODELS,
@@ -268,7 +270,7 @@ else:
     for name, inp in CASES_ONLINE.items():
         t0 = time.perf_counter()
         if not llm_http_ok():
-            skip(f"interpret [{name}]", "хост недоступен (VPN?)", time.perf_counter() - t0)
+            skip(f"interpret [{name}]", "хост недоступен", time.perf_counter() - t0)
             continue
 
         def run(name=name, inp=inp):
