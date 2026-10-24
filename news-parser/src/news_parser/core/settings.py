@@ -9,17 +9,18 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent  # news_parser/ (здесь лежит config/)
+REPO_ROOT = PACKAGE_DIR.parent.parent
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=(REPO_ROOT / ".env", ".env"), extra="ignore")
 
     # --- База данных (PostgreSQL + pgvector) ---
     database_url: str = "postgresql+psycopg://news:news@localhost:5432/news"
     db_schema: str = "news"
 
     # --- LLM (OpenAI-совместимый API организаторов кейса) ---
-    llm_api_url: str = "https://changellenge.up.railway.app/v1"  # без /chat/completions
+    llm_api_url: str = "https://api.alfahack-gateway26.ru/v1"  # без /chat/completions
     llm_api_key: str = ""  # пусто — LLM выключена, разметка правилами
     llm_model: str = "qwen/qwen3.6-35b-a3b"  # ID из списка разрешённых (llm/client.py)
     llm_timeout_s: float = 90.0

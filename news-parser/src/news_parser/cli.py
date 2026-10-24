@@ -2,7 +2,8 @@
 
 Из контейнера:  docker compose exec news-parser python -m news_parser.cli <команда> ...
 
-  packets U_176 [--limit 5] [--analytics-per-news 3] [--trace]   — итоговый JSON для LLM-агента
+  interpret U_176 [--limit 5] [--model ...] [--trace]               — сквозной пайплайн: парсер -> интерпретатор
+  packets U_176 [--limit 5] [--analytics-per-news 3] [--trace]      — итоговый JSON для LLM-агента
   match U_176 [--limit 8]                                           — подбор под клиента (+ контекст для промпта)
   aspects U_176                                                     — как клиент раскладывается на аспекты
   ingest --title ... --text ... | --url ...                         — добавить новость и сразу обработать
@@ -28,6 +29,17 @@ from news_parser.core.settings import get_settings
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="news_parser")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    a = sub.add_parser("interpret", help="сквозной пайплайн: подбор пакетов под клиента -> LLM-интерпретация")
+    a.add_argument("client_id")
+    a.add_argument("--limit", type=int, default=5)
+    a.add_argument("--analytics-per-news", type=int, default=3)
+    a.add_argument("--news-text-chars", type=int, default=3000)
+    a.add_argument("--window-days", type=int)
+    a.add_argument("--min-similarity", type=float)
+    a.add_argument("--model")
+    a.add_argument("--timeout", type=float, default=60.0)
+    a.add_argument("--trace", action="store_true")
 
     a = sub.add_parser("packets", help="итоговый JSON для LLM-агента")
     a.add_argument("client_id")
@@ -98,6 +110,18 @@ def _run(args) -> object:
     from news_parser.storage.clients import load_profile
 
     match args.cmd:
+        case "interpret":
+            return api.interpret_client(
+                args.client_id,
+                limit=args.limit,
+                analytics_per_news=args.analytics_per_news,
+                news_text_chars=args.news_text_chars,
+                window_days=args.window_days,
+                min_similarity=args.min_similarity,
+                model=args.model,
+                timeout=args.timeout,
+                trace=args.trace,
+            )
         case "packets":
             return api.get_packets(
                 args.client_id,

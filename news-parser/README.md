@@ -391,8 +391,12 @@ HTTP-сервера нет. Есть два равноценных способ�
 **Из Python** — если модуль агента работает в том же окружении (или импортирует пакет):
 
 ```python
-from news_parser import get_packets, ClientNotFound
+from news_parser import get_packets, interpret_client, interpret, ClientNotFound
 
+# 1. Сквозной пайплайн в один вызов (парсер + классификатор -> интерпретатор):
+interpretations = interpret_client("U_176", limit=5)
+
+# 2. Или пошагово:
 packets = get_packets("U_176", limit=5)          # [{client, news, analytics}, ...]
 for p in packets:
     answer = interpret(p)                         # LLM-интерпретатор команды
@@ -401,11 +405,13 @@ for p in packets:
 **Из командной строки / другого контейнера** — те же функции, вывод JSON в stdout:
 
 ```bash
+docker compose exec news-parser python -m news_parser.cli interpret U_176 --limit 5
 docker compose exec news-parser python -m news_parser.cli packets U_176 --limit 5
 ```
 
 | Функция | CLI | Что делает |
 |---|---|---|
+| `interpret_client(client_id, limit=5, ...)` | `interpret U_176 [--trace]` | **сквозной пайплайн**: `get_packets` → `interpreter.interpret` для каждого пакета |
 | `get_packets(client_id, limit=5, analytics_per_news=3, news_text_chars=3000, window_days=None, min_similarity=None, trace=False)` | `packets U_176 [--trace]` | **итоговый JSON для LLM-агента**: `[{client, news, analytics}]` (раздел 7) |
 | `match_client(client_id, **options)` | `match U_176` | подбор под клиента по uid: новости с фактами и чанками, аналитика, готовый `context` для промпта |
 | `match_profile(profile, **options)` | — | то же, но профиль передаётся словарём (поля как в `companies`) |
@@ -714,11 +720,11 @@ docker compose exec news-parser python -m news_parser.cli packets U_176 --limit 
 
 ### Шаги
 
-Всё — из **корня репозитория**: образ собирается оттуда, потому что ему нужны и
-`news-parser/`, и библиотека `data_loader/`.
+Всё — из **корня репозитория**: образ собирается оттуда, потому что ему нужны
+`news-parser/`, `data_loader/` и `interpreter/`.
 
 ```bash
-cp news-parser/.env.example news-parser/.env   # вписать LLM_API_KEY
+cp .env.example .env   # вписать LLM_API_KEY
 docker compose up -d --build
 ```
 
@@ -729,11 +735,11 @@ docker build -f news-parser/Dockerfile -t news-parser .
 ```
 
 ```bash
-docker run -d --name news-parser --env-file news-parser/.env -v "$(pwd)/data/alfa:/data/alfa:ro" news-parser
+docker run -d --name news-parser --env-file .env -v "$(pwd)/data/alfa:/data/alfa:ro" news-parser
 ```
 
 Что попадает в сборку, задаёт `.dockerignore` в корне — это белый список: код
-`news-parser`, миграции и `data_loader`. Файлы `.env` с ключами, `.venv`, `data/` и `.git`
+`news-parser`, миграции, `data_loader` и `interpreter`. Файлы `.env` с ключами, `.venv`, `data/` и `.git`
 в образ не попадают.
 
 При старте контейнер:
@@ -790,7 +796,7 @@ docker build -f news-parser/Dockerfile --build-arg EMBEDDING_MODEL=intfloat/mult
 | `DATABASE_URL` | `postgresql+psycopg://news:news@localhost:5432/news` | подключение к БД (драйвер `postgresql+psycopg`) |
 | `DB_SCHEMA` | `news` | схема для таблиц модуля |
 | `LLM_API_URL` | `https://changellenge.up.railway.app/v1` | API организаторов (OpenAI-совместимый), без `/chat/completions` |
-| `LLM_API_KEY` | пусто | **ключ API — вставить в `news-parser/.env`**; пусто — LLM выключена, разметка правилами |
+| `LLM_API_KEY` | пусто | **ключ API — вставить в `.env` в корне**; пусто — LLM выключена, разметка правилами |
 | `LLM_MODEL` | `qwen/qwen3.6-35b-a3b` | ID строго из списка разрешённых в кейсе; другая модель → LLM считается не настроенной |
 | `LLM_JSON_MODE` | `false` | слать `response_format=json_object` — только если API поддерживает |
 | `LLM_MAX_TOKENS` | `2000` | лимит ответа |

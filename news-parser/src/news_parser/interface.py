@@ -2,12 +2,14 @@
 
 Другие модули команды вызывают их напрямую:
 
-    from news_parser import get_packets
-    packets = get_packets("U_176", limit=5)        # [{client, news, analytics}, ...]
+    from news_parser import get_packets, interpret_client
+    packets = get_packets("U_176", limit=5)               # [{client, news, analytics}, ...]
+    interpretations = interpret_client("U_176", limit=5)  # сквозной пайплайн: парсер -> интерпретатор
 
 или из консоли / другого контейнера через CLI (тот же набор функций, вывод — JSON):
 
     python -m news_parser.cli packets U_176 --limit 5
+    python -m news_parser.cli interpret U_176 --limit 5
 
 Все функции возвращают готовые к JSON данные (dict / list / None) — без pydantic- и ORM-объектов.
 Ошибки, которые стоит обрабатывать: ClientNotFound, PacketsUnavailable, ProfileSourceUnavailable.
@@ -41,7 +43,8 @@ from news_parser.storage.models import Article
 
 __all__ = [
     "ClientNotFound", "PacketsUnavailable", "ProfileSourceUnavailable",
-    "get_packets", "match_client", "match_profile", "profile_aspects", "embed",
+    "get_packets", "interpret_packet", "interpret_client", "interpret",
+    "match_client", "match_profile", "profile_aspects", "embed",
     "ingest", "collect", "reprocess", "backfill_chunks",
     "latest_events", "search_events", "get_event", "get_article",
     "search_analytics", "analytics_docs", "load_analytics",
@@ -53,8 +56,29 @@ def _json(model) -> dict:
     return model.model_dump(mode="json")
 
 
+def _load_interpreter():
+    try:
+        from interpreter import fallback_output, interpret as _interpret, new_interpretation_id
+        return _interpret, fallback_output, new_interpretation_id
+    except ImportError:
+        import sys
+        from pathlib import Path
+
+        repo_root = Path(__file__).resolve().parents[3]
+        if (repo_root / "interpreter").is_dir() and str(repo_root) not in sys.path:
+            sys.path.insert(0, str(repo_root))
+        try:
+            from interpreter import fallback_output, interpret as _interpret, new_interpretation_id
+            return _interpret, fallback_output, new_interpretation_id
+        except ImportError as exc:
+            raise PacketsUnavailable(
+                "модуль interpreter не найден: добавьте корень репозитория в PYTHONPATH "
+                "(в Docker это делает Dockerfile)"
+            ) from exc
+
+
 # ---------------------------------------------------------------------------
-# Итоговый JSON под клиента (главное для LLM-агента)
+# Итоговый JSON под клиента (главное для LLM-агента и сквозного пайплайна)
 # ---------------------------------------------------------------------------
 
 
@@ -82,6 +106,85 @@ def get_packets(
         trace=trace,
     )
     return build_packets(client_id, get_services().match, opts)
+
+
+def interpret_packet(
+    packet: dict,
+    *,
+    api_key: str | None = None,
+    model: str | None = None,
+    base_url: str | None = None,
+    temperature: float = 0.0,
+    max_retries: int = 1,
+    timeout: float = 60.0,
+) -> dict:
+    """Интерпретация одного пакета {client, news, analytics} через модуль interpreter."""
+    _interpret, fallback_output, new_interpretation_id = _load_interpreter()
+    settings = get_services().settings
+    try:
+        out = _interpret(
+            packet,
+            api_key=api_key or settings.llm_api_key or None,
+            model=model or settings.llm_model or None,
+            base_url=base_url or settings.llm_api_url or None,
+            temperature=temperature,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
+    except ValueError:
+        raise
+    except Exception as exc:
+        out = fallback_output(packet, new_interpretation_id(), f"network/LLM error: {exc}")
+    if "trace" in packet:
+        out["trace"] = packet["trace"]
+    return out
+
+
+interpret = interpret_packet
+
+
+def interpret_client(
+    client_id: str,
+    *,
+    limit: int = 5,
+    analytics_per_news: int = 3,
+    news_text_chars: int = 3000,
+    window_days: int | None = None,
+    min_similarity: float | None = None,
+    trace: bool = False,
+    api_key: str | None = None,
+    model: str | None = None,
+    base_url: str | None = None,
+    temperature: float = 0.0,
+    max_retries: int = 1,
+    timeout: float = 60.0,
+) -> list[dict]:
+    """Сквозной пайплайн двух модулей:
+    1) news-parser отбирает релевантные клиенту новости и аналитику (get_packets),
+    2) каждый пакет подаётся в LLM-интерпретатор (interpreter.interpret).
+    Возвращает список готовых персонализированных интерпретаций."""
+    _load_interpreter()  # проверяем наличие interpreter до обращения к БД/LLM
+    packets = get_packets(
+        client_id,
+        limit=limit,
+        analytics_per_news=analytics_per_news,
+        news_text_chars=news_text_chars,
+        window_days=window_days,
+        min_similarity=min_similarity,
+        trace=trace,
+    )
+    return [
+        interpret_packet(
+            p,
+            api_key=api_key,
+            model=model,
+            base_url=base_url,
+            temperature=temperature,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
+        for p in packets
+    ]
 
 
 def match_profile(profile: dict | ClientProfile, **options) -> dict:

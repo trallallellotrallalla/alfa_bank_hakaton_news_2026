@@ -100,11 +100,20 @@ def _fallback_profile(client: dict) -> ClientProfile:
 def _get_client_info(client_id: str) -> dict:
     try:
         from data_loader import get_client_info  # библиотека модуля клиентских данных (корень репо)
-    except ImportError as exc:
-        raise PacketsUnavailable(
-            "библиотека data_loader не найдена: добавьте корень репозитория в PYTHONPATH "
-            "(в Docker это делает Dockerfile)"
-        ) from exc
+    except ImportError:
+        import sys
+        from pathlib import Path
+
+        repo_root = Path(__file__).resolve().parents[4]
+        if (repo_root / "data_loader").is_dir() and str(repo_root) not in sys.path:
+            sys.path.insert(0, str(repo_root))
+        try:
+            from data_loader import get_client_info
+        except ImportError as exc:
+            raise PacketsUnavailable(
+                "библиотека data_loader не найдена: добавьте корень репозитория в PYTHONPATH "
+                "(в Docker это делает Dockerfile)"
+            ) from exc
     try:
         client = get_client_info(client_id)
     except Exception as exc:  # psycopg2: нет БД, не создан/не обновлён top_counterparties и т.п.
@@ -171,7 +180,7 @@ def build_packets(client_id: str, match: MatchFn, opts: PacketOptions) -> list[d
                 {
                     "chunk_id": analytics_chunk_id(a),
                     "doc_title": a.doc_title,
-                    "page": a.page_from,
+                    "page": a.page_from if a.page_from is not None else 1,
                     "text": a.text,
                     # позиция банка: из профиля документа (LLM), без него — правила по тексту фрагмента
                     "stance": a.doc_stance or classify_stance(a.text),

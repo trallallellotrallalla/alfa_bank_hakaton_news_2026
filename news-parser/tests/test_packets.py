@@ -89,3 +89,56 @@ def test_news_text_short_article_whole_long_article_relevant_chunks():
     relevant = ["Первый важный фрагмент про ставку. " * 5, "Второй фрагмент про кредиты. " * 5]
     text = _news_text(_news(relevant), long_main, 3000)
     assert "ставку" in text and "кредиты" in text and len(text) <= 3005
+
+
+def test_packet_compatible_with_interpreter():
+    import sys
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+
+    from interpreter.interpreter.interpreter import _validate_input, assemble_output, fallback_output
+
+    packet = {
+        "client": CLIENT,
+        "news": {
+            "news_id": 42,
+            "url": "https://example.com/news/42",
+            "title": "ЦБ сохранил ставку",
+            "published_at": "2026-10-21",
+            "source": "РБК",
+            "text": "Совет директоров Банка России сохранил ставку 14%.",
+        },
+        "analytics": [
+            {
+                "chunk_id": "klyuchevaya_stavka_cb_rf::p2::c1",
+                "doc_title": "Ключевая ставка ЦБ РФ",
+                "page": 2,
+                "text": "Регулятор сигнализирует о более длительном периоде высоких ставок.",
+                "stance": "hawkish",
+                "doc_summary": "• Ставка 14%",
+                "doc_date": "2026-09-11",
+            }
+        ],
+    }
+    _validate_input(packet)
+    fb = fallback_output(packet, 123456789012345, "test")
+    assert fb["client_id"] == "U_176" and fb["event"]["news_id"] == 42
+    raw = {
+        "what_happened": "ЦБ сохранил ключевую ставку на уровне 14%.",
+        "why_it_matters": "Для компании с кредитной нагрузкой обслуживание долга остаётся дорогим.",
+        "risks": ["Сохранение высокой стоимости кредитов"],
+        "opportunities": ["Повышенная доходность депозитов"],
+        "recommended_actions": ["Оценить график рефинансирования"],
+        "bank_view_text": "Период высоких ставок продлится дольше ожидаемого.",
+        "model_inference": "Нагрузка по кредитам сохранится в ближайшем квартале.",
+        "used_chunk_id": "klyuchevaya_stavka_cb_rf::p2::c1",
+        "used_signals": ["credit_dependency"],
+        "confidence": 0.85,
+    }
+    out = assemble_output(raw, packet, 123456789012345)
+    assert out["attribution"]["bank_view"]["chunk_id"] == "klyuchevaya_stavka_cb_rf::p2::c1"
+    assert out["attribution"]["bank_view"]["page"] == 2
+

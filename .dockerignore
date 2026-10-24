@@ -9,6 +9,7 @@
 !news-parser/alembic.ini
 !news-parser/docker-entrypoint.sh
 !data_loader
+!interpreter
 **/__pycache__
 **/*.pyc
 **/.DS_Store

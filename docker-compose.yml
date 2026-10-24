@@ -15,11 +15,11 @@ services:
 
   news-parser:
     build:
-      # контекст — корень репо: в образ нужны и news-parser, и data_loader (get_client_info).
+      # контекст — корень репо: в образ входят news-parser, data_loader и interpreter.
       # Что именно уходит в сборку — задаёт .dockerignore в корне.
       context: .
       dockerfile: news-parser/Dockerfile
-    env_file: ./news-parser/.env
+    env_file: ./.env
     volumes:
       # PDF аналитики Альфа-Банка. Без :ro — рядом с PDF сохраняется кеш распознавания
       # (<имя>.analysis.json), чтобы не тратить токены повторно

@@ -24,6 +24,9 @@ dependencies = [
     "psycopg2-binary>=2.9",
     "python-dotenv>=1.0",
     "pandas>=2.2",
+    # зависимости модуля interpreter (LLM-интерпретатор, корень репо)
+    "openai>=1.40.0",
+    "jsonschema>=4.22.0",
 ]
 
 [dependency-groups]

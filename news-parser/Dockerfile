@@ -23,9 +23,9 @@ WORKDIR /app
 # Порядок слоёв — от редко меняющихся к часто меняющимся, чтобы правка кода
 # не пересобирала зависимости и не скачивала модель заново.
 
-# 1. Зависимости — пересобираются только при изменении uv.lock
+# 1. Зависимости — пересобираются только при изменении pyproject.toml / uv.lock
 COPY news-parser/pyproject.toml news-parser/uv.lock news-parser/README.md ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --no-dev --no-install-project
 
 # 2. Модель эмбеддингов — скачивается при сборке, а не при старте контейнера
 #    (старт быстрый и не зависит от HuggingFace); пересобирается только при смене модели
@@ -38,11 +38,13 @@ USER root
 COPY news-parser/src ./src
 # библиотека модуля клиентских данных (get_client_info) — из корня репо
 COPY data_loader ./data_loader
+# модуль LLM-интерпретатора (interpret) — из корня репо
+COPY interpreter ./interpreter
 COPY news-parser/alembic ./alembic
 COPY news-parser/alembic.ini news-parser/docker-entrypoint.sh ./
 # sed: если репозиторий клонирован на Windows, Git мог заменить переводы строк на CRLF —
 # с ними скрипт в Linux не запустится («not found» / «bad interpreter»)
-RUN uv sync --frozen --no-dev && sed -i 's/\r$//' docker-entrypoint.sh && chmod +x docker-entrypoint.sh
+RUN uv sync --no-dev && sed -i 's/\r$//' docker-entrypoint.sh && chmod +x docker-entrypoint.sh
 
 USER app
 
